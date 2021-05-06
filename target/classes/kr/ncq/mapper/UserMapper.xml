@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="kr.ncq.mapper.UserMapper">
+     
+     <resultMap type="kr.ncq.domain.UsersDAO" id="userMap">
+	       <id property="u_id" column="u_id"/>
+	       <result property="u_id" column="u_id"/>
+	       <result property="u_pw" column="u_pw"/>
+	       <result property="u_name" column="u_name"/>
+	       <result property="u_mailrecevie" column="u_mailrecevie"/>
+	       <result property="u_address" column="u_address"/>
+	       <result property="u_tell" column="u_tell"/>
+	       <result property="u_phone" column="u_phone"/>
+	       <result property="u_SMS" column="u_SMS"/>
+	       <result property="u_email" column="u_email"/>
+	       <result property="u_birth" column="u_birth"/>
+	       <result property="u_marryani" column="u_marryani"/>
+	       <result property="u_matebirth" column="u_matebirth"/>
+	       <result property="u_region" column="u_region"/>
+	       <result property="user_level" column="user_level"/>
+	       <collection property="u_auth" resultMap="authMap"></collection>
+	      
+     </resultMap> 
+      
+      <resultMap type="kr.ncq.domain.UserHasAuthDAO" id="authMap">
+         <result property="u_id" column="u_id"/>
+         <result property="auth" column="auth"/>
+      </resultMap>
+      
+      <resultMap type="kr.ncq.domain.BoardDAO" id="boardMap">
+		       <id property="bno" column="bno"/>
+			       <result property="b_title" column="b_title"/>
+			       <result property="b_content" column="b_content"/>
+			       <result property="b_regdate" column="b_regdate"/>
+			       <result property="b_updatedate" column="b_updatedate"/>
+			       <result property="b_hit" column="b_hit"/>
+			       <result property="replyCnt" column="replyCnt"/>
+			       <collection property="user" resultMap="userMap"/>          
+			       <collection property="region" resultMap="regionMap"/> 
+	     </resultMap>
+	     
+	      <resultMap type="kr.ncq.domain.RegionDAO" id="regionMap">
+	         <result property="regionId" column="regionId"/>
+		     <result property="regionName" column="regionName"/>	 
+	      </resultMap>  
+      
+      <select id="authRead" resultMap="userMap">
+        select u.u_id,u_pw,u_name,u_address,auth
+        from users_has_auth as a JOIN users as u on a.u_id = u.u_id 
+        where u.u_id = #{u_id}
+      </select>
+
+      <select id="userList" resultType="kr.ncq.domain.UsersDAO">
+ 
+         select u_id,u_name,u_address,u_tell,u_phone,u_email
+         from users
+         order by u_id desc
+         limit ${(pageNum-1)*amount},${amount}
+      </select>
+      
+      <select id="userRead" resultType="kr.ncq.domain.UsersDAO">
+        select u_id,u_pw,u_name,u_address,u_tell,u_phone,u_email,u_birth,u_marryani,
+        u_matebirth,u_region
+        from users
+        where u_id = #{u_id}
+      </select>
+      
+      
+      <insert id="userInsert">
+        insert into users (u_id,u_pw,u_name,u_address,u_tell,u_phone,u_email,u_birth,u_marryani,u_matebirth,u_region) 
+        values (#{u_id},#{u_pw},#{u_name},#{u_address},
+        #{u_tell},#{u_phone},#{u_email},#{u_birth},#{u_marryani},#{u_matebirth},#{u_region})
+      </insert>
+      
+      <update id="userUpdate">
+         update users
+         set u_pw = #{u_pw},
+             u_name = #{u_name},
+             u_address = #{u_address},
+             u_tell = #{u_tell},
+             u_phone = #{u_phone},
+             u_email = #{u_email},
+             u_birth = #{u_birth},
+             u_marryani = #{u_marryani},
+             u_matebirth = #[u_matebirth},
+             u_region = #{u_region}
+         where u_id = #{u_id}    
+      </update>
+      
+      <delete id="userDelete">
+        delete from users where u_id = #{u_id}
+      </delete>
+      
+      <delete id="userAuthDelete">
+        delete from users_has_auth where u_id = #{u_id}
+      </delete>
+      
+      <select id="userLogin" resultType="boolean">
+        select count(*) from users where u_id = #{u_id} and u_pw = #{u_pw}
+       </select>
+      
+      <select id="getTotalCount" resultType="long">    
+         select count(*) from users
+      </select>
+      
+      <insert id="userAuthInsert">
+        insert into users_has_auth (u_id,auth) 
+        values (#{u_id},#{auth})
+      </insert>
+      
+      
+      <select id="userBoard" resultMap="boardMap">
+         select bno,b_title,b_content,u_id,b_regdate,b_hit,regionId
+          from board join users using(u_id)
+          where u_id = #{u_id}
+          order by bno desc
+          limit ${(cri.pageNum-1)* cri.amount},${cri.amount}
+      </select>
+      
+      <select id="getBoardTotalCount" resultType="long">
+       select count(*) from board where u_id = #{u_id}  
+      </select>
+      
+      <select id="idCheck" resultType="kr.ncq.domain.UsersDAO">
+        select u_id from users where u_id = #{u_id}
+      </select>
+  </mapper>

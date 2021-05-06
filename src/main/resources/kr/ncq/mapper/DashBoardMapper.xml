@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="kr.ncq.mapper.DashBoardMapper">
+    
+	    <resultMap type="kr.ncq.domain.UsersDAO" id="userMap">
+		       <id property="u_id" column="u_id"/>
+		       <result property="u_id" column="u_id"/>
+		       <result property="u_pw" column="u_pw"/>
+		       <result property="u_name" column="u_name"/>
+		       <result property="u_mailrecevie" column="u_mailrecevie"/>
+		       <result property="u_address" column="u_address"/>
+		       <result property="u_tell" column="u_tell"/>
+		       <result property="u_phone" column="u_phone"/>
+		       <result property="u_SMS" column="u_SMS"/>
+		       <result property="u_email" column="u_email"/>
+		       <result property="u_birth" column="u_birth"/>
+		       <result property="u_marryani" column="u_marryani"/>
+		       <result property="u_matebirth" column="u_matebirth"/>
+		       <result property="u_region" column="u_region"/>
+		       <result property="user_level" column="user_level"/>	         
+	     </resultMap> 
+	      
+	       <resultMap type="kr.ncq.domain.BoardDAO" id="boardMap">
+		       <id property="bno" column="bno"/>
+			       <result property="b_title" column="b_title"/>
+			       <result property="b_content" column="b_content"/>
+			       <result property="b_regdate" column="b_regdate"/>
+			       <result property="b_updatedate" column="b_updatedate"/>
+			       <result property="b_hit" column="b_hit"/>
+			       <result property="replyCnt" column="replyCnt"/>
+			       <collection property="user" resultMap="userMap"/>          
+			       <collection property="region" resultMap="regionMap"/> 
+	     </resultMap>
+	     
+	      <resultMap type="kr.ncq.domain.RegionDAO" id="regionMap">
+	         <result property="regionId" column="regionId"/>
+		     <result property="regionName" column="regionName"/>	 
+	      </resultMap>  
+	      
+	      
+	 <sql id="criteria">
+      <trim prefix="(" suffix=") AND" prefixOverrides="OR">
+        <foreach item="type" collection="cri.typeArr">
+          <trim prefix="OR">
+            <choose>
+              <when test="type == 'T'.toString()">
+                b_title like CONCAT('%', #{cri.keyword}, '%')
+              </when>
+              <when test="type == 'C'.toString()">
+                b_content like CONCAT('%', #{cri.keyword}, '%')
+              </when>
+              <when test="type == 'W'.toString()">
+                u_id like CONCAT('%', #{cri.keyword}, '%')
+              </when>
+            </choose>
+          </trim>
+        </foreach>
+      </trim>
+    </sql>      
+	      
+   <select id="getBoardList" resultMap="boardMap">
+     <![CDATA[
+     select bno,b_title,b_content,b_regdate,u_id,b_hit,replyCnt,regionId
+     from board join region using(regionId)
+     where 
+     ]]>
+       <include refid="criteria"></include>
+     <![CDATA[
+     regionId = #{regionId}
+     order by bno desc
+     limit ${(cri.pageNum-1)* cri.amount},${cri.amount}
+     ]]>
+   </select>  
+	  <!--  <include refid="criteria"></include>  -->
+   <insert id="insertBoard">
+      insert board (b_title,b_content,b_hit,u_id,regionId)
+      values (#{b_title},#{b_content},0,#{user.u_id},#{region.regionId})
+   </insert>	
+   
+   <select id="readBoard" resultMap="boardMap">
+     select bno,b_title,b_content,b_regdate,u_id,regionId
+     from board where bno = #{bno}
+   </select>   
+   
+   <update id="updateBoard">     
+      update board
+      set b_title = #{b_title},
+          b_content = #{b_content},
+          b_updatedate = current_timestamp
+      where bno = #{bno}    
+   </update>   
+   
+   <delete id="deleteBoard">
+     delete from board where bno = #{bno}
+   </delete>
+   
+   <select id="getTotalCount" resultType="long">
+     select count(*) from board 
+     where regionId = #{regionId}     
+   </select>
+   
+   <select id="currentBoard" resultType="long">
+     select LAST_INSERT_ID()
+   </select>
+   
+   <update id="updateReplyCnt">
+     update board
+      set replyCnt = replyCnt + #{amount}
+      where bno = #{bno}
+   </update>
+   
+   <update id="updateHit">
+     update board
+      set b_hit = b_hit +1
+      where bno = #{bno}
+   </update>
+</mapper>

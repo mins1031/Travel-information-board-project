@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="kr.ncq.mapper.BoardMapper">
+    
+       <resultMap type="kr.ncq.domain.NoticeDAO" id="noticeMap">
+         <id property="n_id" column="n_id"/>
+           <result property="n_title" column="n_title"/>          
+           <result property="n_content" column="n_content"/>
+           <result property="n_regdate" column="n_regdate"/>
+           <result property="n_updatedate" column="n_updatedate"/>
+           <result property="n_hit" column="n_hit"/>         
+           <collection property="user" resultMap="userMap"/> 
+       </resultMap> 
+       
+  
+     <resultMap type="kr.ncq.domain.UsersDAO" id="userMap">
+	       <id property="u_id" column="u_id"/>
+	       <result property="u_id" column="u_id"/>
+	       <result property="u_pw" column="u_pw"/>
+	       <result property="u_name" column="u_name"/>
+	       <result property="u_mailrecevie" column="u_mailrecevie"/>
+	       <result property="u_address" column="u_address"/>
+	       <result property="u_tell" column="u_tell"/>
+	       <result property="u_phone" column="u_phone"/>
+	       <result property="u_SMS" column="u_SMS"/>
+	       <result property="u_email" column="u_email"/>
+	       <result property="u_birth" column="u_birth"/>
+	       <result property="u_marryani" column="u_marryani"/>
+	       <result property="u_matebirth" column="u_matebirth"/>
+	       <result property="u_region" column="u_region"/>
+	       <result property="user_level" column="user_level"/>
+	         
+     </resultMap>      
+    
+    <sql id="criteria">
+      <trim prefix="(" suffix=") AND" prefixOverrides="OR">
+        <foreach item="type" collection="typeArr">
+          <trim prefix="OR">
+            <choose>
+              <when test="type == 'T'.toString()">
+                n_title like CONCAT('%', #{keyword}, '%')
+              </when>
+              <when test="type == 'C'.toString()">
+                n_content like CONCAT('%', #{keyword}, '%')
+              </when>
+              <when test="type == 'W'.toString()">
+                u_id like CONCAT('%', #{keyword}, '%')
+              </when>
+            </choose>
+          </trim>
+        </foreach>
+      </trim>
+    </sql> 
+     
+   <select id="getNoticeList" resultMap="noticeMap">
+    <![CDATA[
+     select n_id,n_title,u_id,n_content,n_regdate,n_hit
+     from notice join users using(u_id)
+     where
+     ]]> 
+     <include refid="criteria"></include>     
+     <![CDATA[
+     n_id > 0
+     order by n_regdate desc
+     limit ${(pageNum-1)* amount},${amount}
+     ]]>
+   </select>
+   
+   <select id="readNotice" resultMap="noticeMap">
+      select n_id,n_title,u_id,n_content,n_regdate,n_updatedate,n_hit
+     from notice
+     where n_id = #{n_id}
+   </select>
+   
+   <insert id="registerNotice">
+      insert into notice (n_title,u_id,n_content,n_regdate,n_hit)
+      values (#{n_title},#{userid},#{n_content},#{n_regdate},#{n_hit})
+   </insert>
+   
+   <update id="updateNotice">
+      update notice
+       set n_title = #{n_title},
+           n_content = #{n_content},
+           n_updatedate = current_timestamp
+       where n_id = #{n_id}    
+   </update>
+   
+   <delete id="deleteNotice">
+      delete from notice where n_id = #{n_id} 
+   </delete>
+   
+   <select id="currentInsertId" resultType="long">
+      select LAST_INSERT_ID()
+   </select>
+   
+   <select id="getTotalCount" resultType="long">
+       select count(*) from notice where n_id > 0  
+   </select>
+   <!-- 공지사항 매퍼 끝 -->
+   
+</mapper>
